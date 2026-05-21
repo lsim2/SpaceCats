@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Cats</title>
+
+  <!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║              Space Cats — ASSET GUIDE                      ║
+  ║                                                              ║
+  ║  Recommended folder structure for GitHub Pages:             ║
+  ║                                                             ║
+  ║  /                                                          ║
+  ║    index.html          ← this file                         ║
+  ║    assets/                                                  ║
+  ║      home-bg.svg       ← home screen background SVG        ║
+  ║      bird.svg          ← your animated bird SVG            ║
+  ║      game-bg.png       ← scrolling game background PNG     ║
+  ║                                                             ║
+  ║  To test locally before pushing to GitHub:                  ║
+  ║    npx serve .                                              ║
+  ║  Then open http://localhost:3000                            ║
+  ╚═════════════════════════════════════════════════════════════╝
+-->
+
+  <style>
+    /* ── DESIGN TOKENS ─────────────────────────────────────── */
+    :root {
+      --navy: #1e2547;
+      --navy-deep: #131830;
+      --teal: #5dd4c8;
+      --teal-dim: #2a7a74;
+      --star-warm: #f5c842;
+      --star-cool: #9ecfff;
+      --white: #eef3ff;
+      --score-glow: rgba(93, 212, 200, 0.4);
+
+      --font-display: 'Courier New', monospace;
+      --font-ui: 'Courier New', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--navy-deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: var(--font-ui);
+      overflow: hidden;
+    }
+
+    #game-wrapper {
+      position: relative;
+      width: 480px;
+      height: 640px;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 0 80px rgba(93, 212, 200, 0.15), 0 0 4px rgba(93, 212, 200, 0.4);
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* ── SCREENS ────────────────────────────────────────────── */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease;
+    }
+
+    .screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* HOME SCREEN */
+    /* var(--navy); */
+    #home-screen {
+      background: var(--navy);
+      overflow: hidden;
+    }
+
+    /* ── HOME_BG_IMAGE: Replace src with your own SVG path ──────
+     e.g. src="./assets/home-bg.svg"
+     The image fills the entire home screen behind the UI.     */
+    #home-bg-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+      opacity: 0;
+      /* set to 1 once your asset is in place */
+    }
+
+    /* ──────────────────────────────────────────────────────── */
+
+    /* Fallback star canvas shown when no home-bg.svg is loaded */
+    #home-stars-canvas {
+      position: absolute;
+      inset: 0;
+      margin-top: 280px;
+    }
+
+    .home-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .game-title {
+      font-family: var(--font-display);
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--white);
+      text-transform: uppercase;
+      text-shadow: 0 0 30px var(--teal), 0 0 60px rgba(93, 212, 200, 0.3);
+      animation: titlePulse 3s ease-in-out infinite;
+      text-align: center;
+      line-height: 1.1;
+      margin-top: 170px;
+    }
+
+    .game-subtitle {
+      font-size: 11px;
+      letter-spacing: 6px;
+      color: var(--teal);
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 28px;
+    }
+
+    /* ── START_BUTTON: restyle this however you like ───────── */
+    #start-btn {
+      background: transparent;
+      border: 2px solid var(--teal);
+      color: var(--teal);
+      font-family: var(--font-display);
+      font-size: 14px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      padding: 14px 40px;
+      cursor: pointer;
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.2s, box-shadow 0.2s;
+    }
+
+    #start-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--teal);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.2s ease;
+      z-index: -1;
+    }
+
+    #start-btn:hover {
+      color: var(--navy-deep);
+      box-shadow: 0 0 20px var(--score-glow);
+    }
+
+    #start-btn:hover::before {
+      transform: scaleX(1);
+    }
+
+    #start-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* ──────────────────────────────────────────────────────── */
+
+    .hint-text {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--white);
+      opacity: 0.35;
+      text-transform: uppercase;
+      margin-top: 12px;
+    }
+
+    /* GAME OVER SCREEN */
+    #gameover-screen {
+      background: rgba(19, 24, 48, 0.82);
+      backdrop-filter: blur(4px);
+    }
+
+    .gameover-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      letter-spacing: 4px;
+      color: var(--white);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .score-display {
+      font-size: 64px;
+      color: var(--teal);
+      font-family: var(--font-display);
+      font-weight: 700;
+      text-shadow: 0 0 20px var(--score-glow);
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--teal);
+      opacity: 0.6;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .highscore-line {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--star-warm);
+      opacity: 0.8;
+      margin-bottom: 28px;
+    }
+
+    .retry-btn {
+      background: transparent;
+      border: 2px solid var(--white);
+      color: var(--white);
+      font-family: var(--font-display);
+      font-size: 12px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      padding: 12px 32px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.2s;
+    }
+
+    .retry-btn:hover {
+      background: var(--white);
+      color: var(--navy-deep);
+    }
+
+    /* SCORE HUD */
+    #score-hud {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--white);
+      text-shadow: 0 0 12px var(--score-glow), 0 2px 4px rgba(0, 0, 0, 0.6);
+      letter-spacing: 3px;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    @keyframes titlePulse {
+
+      0%,
+      100% {
+        text-shadow: 0 0 30px var(--teal), 0 0 60px rgba(93, 212, 200, 0.3);
+      }
+
+      50% {
+        text-shadow: 0 0 50px var(--teal), 0 0 100px rgba(93, 212, 200, 0.5);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-wrapper">
+
+    <!-- ═══ HOME SCREEN ═══════════════════════════════════════ -->
+    <div id="home-screen" class="screen">
+
+      <!-- Fallback animated star canvas (hidden once home-bg loads) -->
+      <canvas id="home-stars-canvas"></canvas>
+
+      <!-- ── HOME_BG: swap src to your SVG once it's in assets/ ─
+         e.g.: src="./assets/home-bg.svg"                       -->
+      <img id="home-bg-img" src="./assets/home-bg.svg" alt="" aria-hidden="true">
+      <!-- ──────────────────────────────────────────────────── -->
+
+      <div class="home-content">
+        <!-- ── GAME_TITLE: change text here ─────────────────── -->
+        <div class="game-title">Space Cats</div>
+        <!-- ──────────────────────────────────────────────────── -->
+        <div class="game-subtitle">Feed the cats</div>
+        <button id="start-btn">Launch</button>
+        <div class="hint-text">Space / tap to fly</div>
+      </div>
+    </div>
+    <!-- ════════════════════════════════════════════════════════ -->
+
+    <!-- Score HUD (shown during gameplay) -->
+    <div id="score-hud">0</div>
+
+    <!-- Main game canvas -->
+    <canvas id="game-canvas" width="480" height="640"></canvas>
+
+    <!-- ═══ GAME OVER SCREEN ══════════════════════════════════ -->
+    <div id="gameover-screen" class="screen hidden">
+      <div class="gameover-title">Game Over</div>
+      <div class="score-label">Score</div>
+      <div class="score-display" id="final-score">0</div>
+      <div class="highscore-line" id="highscore-line">Best: 0</div>
+      <button class="retry-btn" id="retry-btn">Try Again</button>
+    </div>
+    <!-- ════════════════════════════════════════════════════════ -->
+
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    //  ASSETS CONFIG — swap these paths for your own files
+    // ═══════════════════════════════════════════════════════════════
+    const ASSETS = {
+      // ── REPLACE THESE PATHS ─────────────────────────────────────
+      homeBg: './assets/home-bg.svg',              // e.g. './assets/home-bg.svg'
+      gameBg: '',              // e.g. './assets/game-bg.png'
+      bird: './assets/bird.svg',              // e.g. './assets/bird.svg'
+      // ────────────────────────────────────────────────────────────
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    //  PHYSICS CONFIG — tweak the feel here
+    // ═══════════════════════════════════════════════════════════════
+    const HARD_PHYSICS = {
+      gravity: 0.38,    // downward pull per frame
+      flapStrength: -7.5,    // upward velocity on flap
+      terminalVel: 10,      // max fall speed
+    };
+
+    const PHYSICS = {
+      gravity: 0.18,   // was 0.38 — slower pull, more weightless
+      flapStrength: -5.5,   // was -7.5 — gentler push upward
+      terminalVel: 6,      // was 10  — slower max fall speed
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  DIFFICULTY CONFIG — how the game scales over time
+    // ═══════════════════════════════════════════════════════════════
+    const HARD_DIFFICULTY = {
+      startSpeed: 2.8,   // initial pipe scroll speed (px/frame)
+      speedIncrement: 0.004, // speed added per frame
+      maxSpeed: 6.5,   // cap
+      startGap: 250,   // initial gap between pipes (px)
+      gapShrinkPerPipe: 2,     // gap reduction per pipe passed
+      minGap: 130,    // floor
+      pipeInterval: 1600,  // ms between pipe spawns
+    };
+
+    const DIFFICULTY = {
+      startSpeed: 2.2,   // was 2.8 — slower initial pace
+      speedIncrement: 0.002, // was 0.004 — ramps up more gradually
+      startGap: 250,   // initial gap between pipes (px)
+      pipeInterval: 2000,  // was 1600 — more breathing room between pipes
+      minGap: 130,    // floor
+      maxSpeed: 6.5,   // cap
+      gapShrinkPerPipe: 2,     // gap reduction per pipe passed
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  OBSTACLE DRAWING — customise the obstacle look here
+    // ═══════════════════════════════════════════════════════════════
+    //
+    //  drawObstacle(ctx, x, y, w, h, isTop)
+    //    ctx    — canvas 2D context
+    //    x,y    — top-left corner of the obstacle rect
+    //    w,h    — width and height
+    //    isTop  — true for the upper obstacle, false for lower
+    //
+    //  Replace this function body with your own design.
+    //  The rect (x, y, w, h) defines the collision area —
+    //  you can draw outside it for visual flair but keep
+    //  the hitbox intact.
+    //
+    function drawObstacle(ctx, x, y, w, h, isTop) {
+      // ── OBSTACLE_STYLE: replace from here ─────────────────────
+
+      // Column body
+      ctx.fillStyle = '#1a2a4a';
+      ctx.strokeStyle = '#3a5a8a';
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, x, y, w, h, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      // Inner glow strip
+      ctx.fillStyle = 'rgba(93,212,200,0.07)';
+      roundRect(ctx, x + 6, y + 6, w - 12, h - 12, 2);
+      ctx.fill();
+
+      // Edge ticks (decorative circuit-board look)
+      ctx.strokeStyle = 'rgba(93,212,200,0.25)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 3; i++) {
+        const ty = isTop ? y + h - 20 - i * 14 : y + 20 + i * 14;
+        ctx.beginPath();
+        ctx.moveTo(x + 8, ty);
+        ctx.lineTo(x + w - 8, ty);
+        ctx.stroke();
+      }
+
+      // Cap (the opening end)
+      const capH = 14;
+      const capY = isTop ? y + h - capH : y;
+      ctx.fillStyle = '#253d60';
+      ctx.strokeStyle = '#5dd4c8';
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, x - 4, capY, w + 8, capH, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      // ── replace to here ────────────────────────────────────────
+    }
+    // ═══════════════════════════════════════════════════════════════
+
+    // ═══════════════════════════════════════════════════════════════
+    //  AUDIO SETUP
+    // ═══════════════════════════════════════════════════════════════
+    //
+
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    function getAudio() {
+      if (!audioCtx) audioCtx = new AudioCtx();
+      return audioCtx;
+    }
+
+    function playTone(freq, type, duration, volume = 0.3) {
+      const ctx = getAudio();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(volume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    }
+
+    let musicNodes = [];
+
+    function startMusic() {
+      const ctx = getAudio();
+
+      // Bassline notes and timing
+      const bass = [130, 130, 146, 164, 130, 130, 116, 123];
+      const melody = [523, 659, 784, 659, 523, 440, 493, 523];
+
+      let step = 0;
+      const bpm = 120;
+      const interval = (60 / bpm) * 0.5; // eighth notes
+
+      function tick() {
+        const now = ctx.currentTime;
+
+        // Bass
+        const b = ctx.createOscillator();
+        const bg = ctx.createGain();
+        b.connect(bg); bg.connect(ctx.destination);
+        b.type = 'sine';
+        b.frequency.value = bass[step % bass.length];
+        bg.gain.setValueAtTime(0.12, now);
+        bg.gain.exponentialRampToValueAtTime(0.001, now + interval * 0.8);
+        b.start(now); b.stop(now + interval);
+
+        // Melody (every other step)
+        if (step % 2 === 0) {
+          const m = ctx.createOscillator();
+          const mg = ctx.createGain();
+          m.connect(mg); mg.connect(ctx.destination);
+          m.type = 'triangle';
+          m.frequency.value = melody[(step / 2) % melody.length];
+          mg.gain.setValueAtTime(0.08, now);
+          mg.gain.exponentialRampToValueAtTime(0.001, now + interval * 1.5);
+          m.start(now); m.stop(now + interval * 1.5);
+        }
+
+        step++;
+        musicTimer = setTimeout(tick, interval * 1000);
+      }
+
+      tick();
+    }
+
+    let musicTimer;
+
+    function stopMusic() {
+      clearTimeout(musicTimer);
+      musicTimer = null;
+    }
+
+    // Flap — short blip
+    function playFlap() { playTone(520, 'sine', 0.08, 0.2); }
+
+    // Score / pass a pipe — ascending chirp
+    function playScore() {
+      playTone(660, 'sine', 0.1, 0.3);
+      setTimeout(() => playTone(880, 'sine', 0.1, 0.3), 80);
+    }
+
+    // Collect treat — sparkly high blip
+    function playTreat() {
+      playTone(1100, 'sine', 0.08, 0.25);
+      setTimeout(() => playTone(1400, 'sine', 0.08, 0.2), 60);
+    }
+
+    // Die — low descending thud
+    function playDie() {
+      playTone(220, 'sawtooth', 0.3, 0.4);
+      setTimeout(() => playTone(140, 'sawtooth', 0.4, 0.5), 100);
+    }
+
+
+    // ──────────────────────────────────────────────────────────────
+    //  ENGINE — you don't need to touch anything below this line
+    //  unless you want to extend game logic
+    // ──────────────────────────────────────────────────────────────
+
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const homeScreen = document.getElementById('home-screen');
+    const gameoverScreen = document.getElementById('gameover-screen');
+    const scoreHud = document.getElementById('score-hud');
+    const finalScoreEl = document.getElementById('final-score');
+    const highscoreEl = document.getElementById('highscore-line');
+    const startBtn = document.getElementById('start-btn');
+    const retryBtn = document.getElementById('retry-btn');
+
+    let highScore = 0;
+    let state = 'home'; // 'home' | 'playing' | 'dead'
+
+    // ── Asset loading ──────────────────────────────────────────────
+    const bgImg = new Image();
+    const birdImg = new Image();
+    let bgLoaded = false;
+    let birdLoaded = false;
+
+    if (ASSETS.gameBg) {
+      bgImg.onload = () => { bgLoaded = true; };
+      bgImg.src = ASSETS.gameBg;
+    }
+    if (ASSETS.bird) {
+      birdImg.onload = () => { birdLoaded = true; };
+      birdImg.src = ASSETS.bird;
+    }
+    if (ASSETS.homeBg) {
+      const img = document.getElementById('home-bg-img');
+      img.src = ASSETS.homeBg;
+      img.onload = () => {
+        img.style.opacity = '1';
+        // document.getElementById('home-stars-canvas').style.display = 'none';
+      };
+    }
+
+    // ── Home screen star canvas fallback ──────────────────────────
+    (function homeStars() {
+      const sc = document.getElementById('home-stars-canvas');
+      const sctx = sc.getContext('2d');
+      sc.width = 480; sc.height = 640;
+      const stars = Array.from({ length: 100 }, () => ({
+        x: Math.random() * 480, y: Math.random() * 640,
+        r: Math.random() * 1.8 + 0.3,
+        phase: Math.random() * Math.PI * 2,
+        speed: Math.random() * 0.02 + 0.005,
+        color: Math.random() > 0.7 ? '#f5c842' : (Math.random() > 0.5 ? '#9ecfff' : '#5dd4c8'),
+      }));
+      // Decorative doodles matching the uploaded image aesthetic
+      const doodles = [
+        { type: 'planet', x: 390, y: 120, r: 26, ring: true, color: '#7ecfcf' },
+        { type: 'planet', x: 88, y: 135, r: 17, ring: false, color: '#c8d84a' },
+        { type: 'moon', x: 310, y: 255, r: 13 },
+        { type: 'comet', x: 55, y: 225 },
+        { type: 'planet', x: 75, y: 540, r: 15, ring: false, color: '#e05555' },
+      ];
+
+      function drawDoodles() {
+        doodles.forEach(d => {
+          sctx.save();
+          if (d.type === 'planet') {
+            sctx.fillStyle = d.color;
+            sctx.beginPath(); sctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); sctx.fill();
+            if (d.ring) {
+              sctx.strokeStyle = 'rgba(255,255,255,0.6)';
+              sctx.lineWidth = 2.5;
+              sctx.beginPath();
+              sctx.ellipse(d.x, d.y, d.r * 1.7, d.r * 0.45, -0.3, 0, Math.PI * 2);
+              sctx.stroke();
+            }
+            // stripe
+            sctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            sctx.lineWidth = 2;
+            for (let s = -1; s <= 1; s++) {
+              sctx.beginPath();
+              sctx.ellipse(d.x, d.y + s * d.r * 0.3, d.r * 0.95, d.r * 0.25, 0, 0, Math.PI * 2);
+              sctx.stroke();
+            }
+          } else if (d.type === 'moon') {
+            sctx.fillStyle = '#b8c0cc';
+            sctx.beginPath(); sctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); sctx.fill();
+            sctx.fillStyle = 'rgba(0,0,0,0.12)';
+            [[3, -2, 2], [-4, 3, 3], [2, 5, 1.5]].forEach(([dx, dy, cr]) => {
+              sctx.beginPath(); sctx.arc(d.x + dx, d.y + dy, cr, 0, Math.PI * 2); sctx.fill();
+            });
+          } else if (d.type === 'comet') {
+            sctx.strokeStyle = 'rgba(245,200,66,0.7)'; sctx.lineWidth = 1.5;
+            sctx.beginPath(); sctx.moveTo(d.x - 20, d.y + 10); sctx.lineTo(d.x, d.y); sctx.stroke();
+            sctx.strokeStyle = 'rgba(245,200,66,0.3)'; sctx.lineWidth = 1;
+            sctx.beginPath(); sctx.moveTo(d.x - 25, d.y + 5); sctx.lineTo(d.x - 2, d.y - 2); sctx.stroke();
+            sctx.fillStyle = '#f5c842';
+            sctx.beginPath(); sctx.arc(d.x, d.y, 4, 0, Math.PI * 2); sctx.fill();
+          }
+          sctx.restore();
+        });
+      }
+
+      let t = 0;
+      function animStars() {
+        if (state !== 'home') { requestAnimationFrame(animStars); return; }
+        sctx.clearRect(0, 0, 480, 640);
+        sctx.fillStyle = '#3c4970';
+        sctx.fillRect(0, 0, 480, 640);
+        drawDoodles();
+        t += 0.016;
+        stars.forEach(s => {
+          const a = 0.5 + 0.5 * Math.sin(s.phase + t * s.speed * 60);
+          sctx.fillStyle = s.color;
+          sctx.globalAlpha = a * 0.9;
+          sctx.beginPath();
+          sctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          sctx.fill();
+        });
+        sctx.globalAlpha = 1;
+        requestAnimationFrame(animStars);
+      }
+      animStars();
+    })();
+
+    // ── Game state ─────────────────────────────────────────────────
+    let bird, pipes, score, speed, gap, bgOffset, lastPipeTime, raf, treats;
+
+    function initGame() {
+      bird = { x: 100, y: H / 2, vy: 0, w: 115, h: 115 };
+      pipes = [];
+      score = 0;
+      speed = DIFFICULTY.startSpeed;
+      gap = DIFFICULTY.startGap;
+      bgOffset = 0;
+      lastPipeTime = 0;
+      treats = [];
+    }
+
+    // ── Starfield for game background ─────────────────────────────
+    const gameStars = Array.from({ length: 80 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.6 + 0.2,
+      speed: Math.random() * 0.4 + 0.1,
+      color: Math.random() > 0.7 ? '#f5c842' : (Math.random() > 0.5 ? '#9ecfff' : 'rgba(93,212,200,0.8)'),
+    }));
+
+    // ── Draw calls ─────────────────────────────────────────────────
+    function drawBackground() {
+      if (bgLoaded) {
+        const bw = bgImg.naturalWidth || W;
+        const bh = bgImg.naturalHeight || H;
+        const scale = H / bh;
+        const sw = bw * scale;
+        const ox = bgOffset % sw;
+        ctx.drawImage(bgImg, -ox, 0, sw, H);
+        ctx.drawImage(bgImg, sw - ox, 0, sw, H);
+      } else {
+        // Fallback: animated parallax star field
+        ctx.fillStyle = '#1e2547';
+        ctx.fillRect(0, 0, W, H);
+        gameStars.forEach(s => {
+          s.x -= s.speed * (speed / DIFFICULTY.startSpeed);
+          if (s.x < 0) { s.x = W; s.y = Math.random() * H; }
+          ctx.fillStyle = s.color;
+          ctx.globalAlpha = 0.85;
+          ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function drawBird() {
+      const b = bird;
+      const angle = Math.max(-0.45, Math.min(0.6, b.vy * 0.06));
+      ctx.save();
+      ctx.translate(b.x + b.w / 2, b.y + b.h / 2);
+      ctx.rotate(angle);
+      console.log(birdImg);
+      if (birdLoaded) {
+        ctx.drawImage(birdImg, -b.w / 2, -b.h / 2, b.w, b.h);
+      } else {
+        // ── BIRD_FALLBACK: shown until bird.svg is in assets/ ──────
+        //    Replace this with nothing once your asset is in place
+        const bw = b.w, bh = b.h;
+        // Body
+        ctx.fillStyle = '#5dd4c8';
+        ctx.beginPath(); ctx.ellipse(0, 0, bw / 2, bh / 2.4, 0, 0, Math.PI * 2); ctx.fill();
+        // Visor
+        ctx.fillStyle = '#1e2547';
+        ctx.beginPath(); ctx.ellipse(bw * 0.15, -bh * 0.05, bw * 0.22, bh * 0.22, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(93,212,200,0.4)';
+        ctx.beginPath(); ctx.ellipse(bw * 0.15, -bh * 0.05, bw * 0.14, bh * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+        // Antenna
+        ctx.strokeStyle = '#f5c842'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-bw * 0.05, -bh * 0.45); ctx.lineTo(-bw * 0.05, -bh * 0.7); ctx.stroke();
+        ctx.fillStyle = '#f5c842';
+        ctx.beginPath(); ctx.arc(-bw * 0.05, -bh * 0.72, 2.5, 0, Math.PI * 2); ctx.fill();
+        // Wing
+        ctx.fillStyle = '#2a7a74';
+        ctx.beginPath(); ctx.ellipse(-bw * 0.1, bh * 0.1, bw * 0.2, bh * 0.12, 0.5, 0, Math.PI * 2); ctx.fill();
+        // ── end BIRD_FALLBACK ──────────────────────────────────────
+      }
+      ctx.restore();
+    }
+
+    function drawPipes() {
+      pipes.forEach(p => {
+        // Top obstacle
+        drawObstacle(ctx, p.x, 0, p.w, p.topH, true);
+        // Bottom obstacle
+        drawObstacle(ctx, p.x, p.topH + p.gap, p.w, H - p.topH - p.gap, false);
+      });
+    }
+
+    function drawScore() {
+      scoreHud.textContent = score;
+    }
+
+    function drawTreat(ctx, x, y) {
+      // ── TREAT_STYLE: replace this with your own design ────────
+      ctx.save();
+      ctx.fillStyle = '#f5c842';
+      ctx.beginPath();
+      ctx.arc(x, y, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', x, y);
+      ctx.restore();
+      // ── end TREAT_STYLE ────────────────────────────────────────
+    }
+
+    // ── Game loop ──────────────────────────────────────────────────
+    function loop(ts) {
+      if (state !== 'playing') return;
+
+      // Background scroll
+      bgOffset += speed * 0.5;
+
+      // Physics
+      bird.vy += PHYSICS.gravity;
+      bird.vy = Math.min(bird.vy, PHYSICS.terminalVel);
+      bird.y += bird.vy;
+
+      // Speed ramp
+      speed = Math.min(speed + DIFFICULTY.speedIncrement, DIFFICULTY.maxSpeed);
+
+      if (!lastPipeTime || ts - lastPipeTime > DIFFICULTY.pipeInterval) {
+        const minTop = 60, maxTop = H - gap - 60;
+        const topH = minTop + Math.random() * (maxTop - minTop);
+        pipes.push({ x: W + 10, w: 64, topH, gap, scored: false });
+
+        // Treat appears midway through the gap, halfway between pipes
+        treats.push({
+          x: W + 10 + 32,           // horizontally centered on the pipe
+          y: topH + gap / 2,        // vertically centered in the gap
+          collected: false,
+        });
+
+        lastPipeTime = ts;
+        gap = Math.max(DIFFICULTY.minGap, gap - DIFFICULTY.gapShrinkPerPipe);
+      }
+
+      // Move & score pipes
+      pipes.forEach(p => {
+        p.x -= speed;
+        if (!p.scored && p.x + p.w < bird.x) {
+          p.scored = true;
+          playScore();
+          score++;
+          if (score > highScore) highScore = score;
+          scoreHud.textContent = score;
+        }
+      });
+      pipes = pipes.filter(p => p.x + p.w > -10);
+
+      // Collision detection
+      const bx1 = bird.x + 12, by1 = bird.y + 12;
+      const bx2 = bird.x + bird.w - 12, by2 = bird.y + bird.h - 12;
+
+      // Ceiling / floor
+      // BE MORE LENIENT
+      if (bird.y < -10 || bird.y + bird.h > H + 10) { die(); return; }
+
+      for (const p of pipes) {
+        const px2 = p.x + p.w;
+        if (bx2 > p.x && bx1 < px2) {
+          if (by1 < p.topH || by2 > p.topH + p.gap) { die(); return; }
+        }
+      }
+
+      // Draw
+      ctx.clearRect(0, 0, W, H);
+      drawBackground();
+      drawPipes();
+      drawBird();
+
+      // Move treats
+      treats.forEach(t => { t.x -= speed; });
+      treats = treats.filter(t => t.x > -20);
+
+      // Collect treats
+      treats.forEach(t => {
+        if (t.collected) return;
+        const dx = (bird.x + bird.w / 2) - t.x;
+        const dy = (bird.y + bird.h / 2) - t.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 40) {
+          t.collected = true;
+          playTreat();
+          score++;                        // or handle separately if you want a treat counter
+          scoreHud.textContent = score;
+        }
+      });
+
+      // Draw treats
+      treats.filter(t => !t.collected).forEach(t => drawTreat(ctx, t.x, t.y));
+
+      raf = requestAnimationFrame(loop);
+    }
+
+    function die() {
+      playDie();
+      state = 'dead';
+      cancelAnimationFrame(raf);
+      finalScoreEl.textContent = score;
+      highscoreEl.textContent = `Best: ${highScore}`;
+      gameoverScreen.classList.remove('hidden');
+      scoreHud.style.opacity = '0';
+      stopMusic();
+    }
+
+    // ── Input ──────────────────────────────────────────────────────
+    function flap() {
+      if (state === 'playing') {
+        bird.vy = PHYSICS.flapStrength;
+        playFlap();
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); flap(); }
+    });
+    document.getElementById('game-wrapper').addEventListener('pointerdown', e => {
+      if (state === 'playing') { e.preventDefault(); flap(); }
+    });
+
+    // ── Screen transitions ─────────────────────────────────────────
+    function startGame() {
+      startMusic();
+      homeScreen.classList.add('hidden');
+      gameoverScreen.classList.add('hidden');
+      scoreHud.style.opacity = '1';
+      initGame();
+      state = 'playing';
+      raf = requestAnimationFrame(loop);
+    }
+
+    startBtn.addEventListener('click', startGame);
+    retryBtn.addEventListener('click', () => {
+      gameoverScreen.classList.add('hidden');
+      scoreHud.style.opacity = '1';
+      initGame();
+      state = 'playing';
+      raf = requestAnimationFrame(loop);
+      startMusic();
+    });
+
+    // ── Utility ────────────────────────────────────────────────────
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+  </script>
+</body>
+
+</html>
