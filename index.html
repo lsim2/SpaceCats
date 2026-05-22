@@ -322,7 +322,7 @@
     <canvas id="game-canvas" width="480" height="640"></canvas>
     <div id="bird-el" style="position: absolute; width: 72px; height: 72px; pointer-events: none; display: none;"><svg
         version="1.1" viewBox="240 60 280 400" fill="none" stroke="none" stroke-linecap="square" stroke-miterlimit="10"
-        xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="150px" height="150px">
+        xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="130px" height="130px">
         <style>
           @keyframes float {
 
@@ -748,7 +748,7 @@
     const PHYSICS = {
       gravity: 0.14,   // was 0.38 — slower pull, more weightless
       flapStrength: -5,   // was -7.5 — gentler push upward
-      terminalVel: 4,      // was 10  — slower max fall speed
+      terminalVel: 5,      // was 10  — slower max fall speed
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -768,7 +768,7 @@
       startSpeed: 2,   // was 2.8 — slower initial pace
       speedIncrement: 0.002, // was 0.004 — ramps up more gradually
       startGap: 250,   // initial gap between pipes (px)
-      pipeInterval: 2000,  // was 1600 — more breathing room between pipes
+      pipeInterval: 2500,  // was 1600 — more breathing room between pipes
       minGap: 130,    // floor
       maxSpeed: 6.5,   // cap
       gapShrinkPerPipe: 2,     // gap reduction per pipe passed
@@ -1195,7 +1195,7 @@
       // bird.y += bird.vy;
 
       // Scale everything by delta * 60 so it behaves as if running at 60fps
-      const scale = delta * 60;
+      const scale = delta * 50;
 
       // Physics
       bgOffset += speed * 0.5 * scale;
@@ -1237,12 +1237,12 @@
       pipes = pipes.filter(p => p.x + p.w > -10);
 
       // Collision detection
-      const bx1 = bird.x + 12, by1 = bird.y + 12;
-      const bx2 = bird.x + bird.w - 12, by2 = bird.y + bird.h - 12;
+      const bx1 = bird.x + 30, by1 = bird.y + 30;
+      const bx2 = bird.x + bird.w - 30, by2 = bird.y + bird.h - 30;
 
       // Ceiling / floor
       // BE MORE LENIENT
-      if (bird.y < -10 || bird.y + bird.h > H + 10) { die(); return; }
+      if (bird.y < -20 || bird.y + bird.h > H +210) { die(); return; }
 
       for (const p of pipes) {
         const px2 = p.x + p.w;
