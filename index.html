@@ -746,9 +746,9 @@
     };
 
     const PHYSICS = {
-      gravity: 0.18,   // was 0.38 — slower pull, more weightless
-      flapStrength: -5.5,   // was -7.5 — gentler push upward
-      terminalVel: 6,      // was 10  — slower max fall speed
+      gravity: 0.14,   // was 0.38 — slower pull, more weightless
+      flapStrength: -5,   // was -7.5 — gentler push upward
+      terminalVel: 4,      // was 10  — slower max fall speed
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -765,7 +765,7 @@
     };
 
     const DIFFICULTY = {
-      startSpeed: 2.2,   // was 2.8 — slower initial pace
+      startSpeed: 2,   // was 2.8 — slower initial pace
       speedIncrement: 0.002, // was 0.004 — ramps up more gradually
       startGap: 250,   // initial gap between pipes (px)
       pipeInterval: 2000,  // was 1600 — more breathing room between pipes
@@ -1060,8 +1060,10 @@
 
     // ── Game state ─────────────────────────────────────────────────
     let bird, pipes, score, speed, gap, bgOffset, lastPipeTime, raf, treats;
+    let lastTime = null;
 
     function initGame() {
+      lastTime = null;
       bird = { x: 100, y: H / 2, vy: 0, w: 130, h: 130 };
       pipes = [];
       score = 0;
@@ -1180,16 +1182,30 @@
     function loop(ts) {
       if (state !== 'playing') return;
 
+      // Calculate delta in seconds, capped to avoid huge jumps after tab switch
+      if (!lastTime) lastTime = ts;
+      const delta = Math.min((ts - lastTime) / 1000, 0.05);
+      lastTime = ts;
+
+
       // Background scroll
       bgOffset += speed * 0.5;
+      // bird.vy += PHYSICS.gravity;
+      // bird.vy = Math.min(bird.vy, PHYSICS.terminalVel);
+      // bird.y += bird.vy;
+
+      // Scale everything by delta * 60 so it behaves as if running at 60fps
+      const scale = delta * 60;
 
       // Physics
-      bird.vy += PHYSICS.gravity;
+      bgOffset += speed * 0.5 * scale;
+      bird.vy += PHYSICS.gravity * scale;
       bird.vy = Math.min(bird.vy, PHYSICS.terminalVel);
-      bird.y += bird.vy;
+      bird.y += bird.vy * scale;
 
       // Speed ramp
-      speed = Math.min(speed + DIFFICULTY.speedIncrement, DIFFICULTY.maxSpeed);
+      speed = Math.min(speed + DIFFICULTY.speedIncrement * scale, DIFFICULTY.maxSpeed);
+      // speed = Math.min(speed + DIFFICULTY.speedIncrement, DIFFICULTY.maxSpeed);
 
       if (!lastPipeTime || ts - lastPipeTime > DIFFICULTY.pipeInterval) {
         const minTop = 60, maxTop = H - gap - 60;
@@ -1209,7 +1225,7 @@
 
       // Move & score pipes
       pipes.forEach(p => {
-        p.x -= speed;
+        p.x -= speed * scale;
         if (!p.scored && p.x + p.w < bird.x) {
           p.scored = true;
           playScore();
@@ -1242,7 +1258,7 @@
       drawBird();
 
       // Move treats
-      treats.forEach(t => { t.x -= speed; });
+      treats.forEach(t => { t.x -= speed * scale; });
       treats = treats.filter(t => t.x > -20);
 
       // Collect treats
